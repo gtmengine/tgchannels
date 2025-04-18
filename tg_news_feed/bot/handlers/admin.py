@@ -1,6 +1,10 @@
 import logging
 import re
+import socket
+import platform
+import psutil
 from typing import Optional
+from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.types import Message
@@ -13,6 +17,9 @@ from tg_news_feed.parser.fetcher import TelegramFetcher
 
 logger = logging.getLogger(__name__)
 router = Router()
+
+# Track server start time for uptime calculation
+SERVER_START_TIME = datetime.now()
 
 
 def is_admin(user_id: int) -> bool:
@@ -38,6 +45,50 @@ async def cmd_stats(message: Message, repo: Repository):
         f"📝 Всего постов: {stats['posts']}\n"
         f"📡 Активных каналов: {stats['channels']}\n"
         f"❤️ Сохранённых постов: {stats['saved_posts']}",
+        parse_mode="Markdown"
+    )
+
+
+@router.message(Command("server"))
+async def cmd_server_info(message: Message):
+    """Handle /server command - show server information."""
+    user_id = message.from_user.id
+    
+    if not is_admin(user_id):
+        await message.answer("⛔ У вас нет прав для использования этой команды.")
+        return
+    
+    # Get server information
+    hostname = socket.gethostname()
+    platform_info = platform.platform()
+    uptime = datetime.now() - SERVER_START_TIME
+    
+    # Get system usage if psutil is available
+    try:
+        cpu_usage = f"{psutil.cpu_percent()}%"
+        memory = psutil.virtual_memory()
+        memory_usage = f"{memory.percent}% ({memory.used // 1024 // 1024}MB / {memory.total // 1024 // 1024}MB)"
+        disk = psutil.disk_usage('/')
+        disk_usage = f"{disk.percent}% ({disk.used // 1024 // 1024 // 1024}GB / {disk.total // 1024 // 1024 // 1024}GB)"
+    except (ImportError, NameError):
+        cpu_usage = "N/A"
+        memory_usage = "N/A"
+        disk_usage = "N/A"
+    
+    # Format uptime
+    days = uptime.days
+    hours, remainder = divmod(uptime.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    uptime_str = f"{days}d {hours}h {minutes}m {seconds}s"
+    
+    await message.answer(
+        "🖥️ *Информация о сервере*\n\n"
+        f"🏷️ Хост: `{hostname}`\n"
+        f"💻 Платформа: `{platform_info}`\n"
+        f"⏱️ Аптайм: `{uptime_str}`\n"
+        f"🔄 CPU: `{cpu_usage}`\n"
+        f"📊 Память: `{memory_usage}`\n"
+        f"💾 Диск: `{disk_usage}`\n",
         parse_mode="Markdown"
     )
 

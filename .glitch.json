@@ -1,0 +1,20 @@
+{
+  "install": "pip3 install -r requirements.txt",
+  "start": "python3 -m tg_news_feed.main",
+  "watch": {
+    "ignore": [
+      "\\.pyc$",
+      "__pycache__"
+    ],
+    "install": {
+      "include": [
+        "^requirements\\.txt$"
+      ]
+    },
+    "restart": {
+      "include": [
+        "\\.py$"
+      ]
+    }
+  }
+} 

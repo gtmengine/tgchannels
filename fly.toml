@@ -1,0 +1,19 @@
+app = "tg-news-feed"
+primary_region = "ams"
+kill_signal = "SIGINT"
+kill_timeout = 5
+
+[processes]
+app = "python -m tg_news_feed.main"
+
+[env]
+  DB_PATH = "/data/db.sqlite"
+
+[mounts]
+  source = "tg_news_feed_data"
+  destination = "/data"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512 

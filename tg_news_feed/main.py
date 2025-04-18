@@ -1,9 +1,12 @@
 import asyncio
 import logging
 import sys
+import socket
+import uuid
+import platform
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 
 from tg_news_feed.config import config
 from tg_news_feed.storage.repo import Repository
@@ -25,6 +28,12 @@ logger = logging.getLogger(__name__)
 
 async def main():
     """Main function to start the bot."""
+    # Generate a unique server ID to track multiple deployments
+    server_id = str(uuid.uuid4())[:8]
+    hostname = socket.gethostname()
+    
+    logger.info(f"Starting bot on {hostname} (ID: {server_id}) - Platform: {platform.platform()}")
+    
     # Initialize repository and create tables
     repo = Repository()
     repo.create_tables()
@@ -43,7 +52,7 @@ async def main():
     # Initialize bot and dispatcher
     bot = Bot(
         token=config.BOT_TOKEN,
-        default=DefaultBotProperties(parse_mode="HTML")
+        parse_mode=ParseMode.HTML
     )
     dp = Dispatcher(storage=MemoryStorage())
     
@@ -62,10 +71,10 @@ async def main():
     
     # Start polling
     try:
-        logger.info("Starting bot")
+        logger.info(f"Bot started on {hostname} (ID: {server_id})")
         await dp.start_polling(bot)
     finally:
-        logger.info("Stopping bot")
+        logger.info(f"Stopping bot on {hostname} (ID: {server_id})")
         await fetcher.stop()
         scheduler.stop()
 
