@@ -1,0 +1,29 @@
+services:
+  # A web service to run the Telegram bot
+  - type: web
+    name: tg-news-feed
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m tg_news_feed.main
+    repo: https://github.com/gtmengine/tg-news-feed.git  # Your GitHub repo
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: BOT_TOKEN
+        sync: false  # Render will prompt for this value
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: FEEDBACK_FORM
+        sync: false
+      - key: PARSER_INTERVAL_MINUTES
+        value: 5
+      - key: DB_PATH
+        value: /var/data/db.sqlite
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1 
