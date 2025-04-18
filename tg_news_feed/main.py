@@ -8,6 +8,7 @@ from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.enums import ParseMode
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from tg_news_feed.config import config
 from tg_news_feed.storage.repo import Repository
@@ -35,14 +36,6 @@ async def health_check(request):
 
 app.router.add_get('/health', health_check)
 
-async def run_web_app():
-    """Run the web application for health checks."""
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8080)
-    await site.start()
-    logger.info("Health check endpoint started on port 8080")
-
 async def main():
     """Main function to start the bot."""
     # Generate a unique server ID to track multiple deployments
@@ -67,10 +60,7 @@ async def main():
     logger.info("Scheduler started")
     
     # Initialize bot and dispatcher
-    bot = Bot(
-        token=config.BOT_TOKEN,
-        parse_mode=ParseMode.HTML
-    )
+    bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
     dp = Dispatcher(storage=MemoryStorage())
     
     # Register handlers
@@ -78,15 +68,27 @@ async def main():
     dp.include_router(admin.router)
     
     # Register middleware
-    dp.message.middleware(lambda handler, event, data: {
-        **data, "repo": repo, "fetcher": fetcher
-    })
-    dp.callback_query.middleware(lambda handler, event, data: {
-        **data, "repo": repo, "fetcher": fetcher
-    })
+    async def middleware_handler(handler, event, data):
+        data["repo"] = repo
+        data["fetcher"] = fetcher
+        return await handler(event, data)
+    
+    dp.message.middleware(middleware_handler)
+    dp.callback_query.middleware(middleware_handler)
+    
+    # Set up webhook handler
+    webhook_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot,
+    )
+    webhook_handler.register(app, path='/webhook')
     
     # Start health check endpoint
-    await run_web_app()
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    await site.start()
+    logger.info("Health check endpoint started on port 8080")
     
     # Start polling
     try:
@@ -96,7 +98,7 @@ async def main():
         logger.info(f"Stopping bot on {hostname} (ID: {server_id})")
         await fetcher.stop()
         scheduler.stop()
-
+        await runner.cleanup()
 
 if __name__ == "__main__":
     try:
