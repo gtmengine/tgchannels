@@ -4,6 +4,7 @@ import sys
 import socket
 import uuid
 import platform
+from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.enums import ParseMode
@@ -25,6 +26,22 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+# Create web app for health checks
+app = web.Application()
+
+async def health_check(request):
+    """Health check endpoint for Koyeb."""
+    return web.Response(text='OK', status=200)
+
+app.router.add_get('/health', health_check)
+
+async def run_web_app():
+    """Run the web application for health checks."""
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    await site.start()
+    logger.info("Health check endpoint started on port 8080")
 
 async def main():
     """Main function to start the bot."""
@@ -61,13 +78,15 @@ async def main():
     dp.include_router(admin.router)
     
     # Register middleware
-    # We'll use DI for providing repository and fetcher
     dp.message.middleware(lambda handler, event, data: {
         **data, "repo": repo, "fetcher": fetcher
     })
     dp.callback_query.middleware(lambda handler, event, data: {
         **data, "repo": repo, "fetcher": fetcher
     })
+    
+    # Start health check endpoint
+    await run_web_app()
     
     # Start polling
     try:
