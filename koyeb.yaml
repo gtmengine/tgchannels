@@ -36,4 +36,5 @@ service:
   persistence:
     - mount_path: /data
       type: volume
-      size: 1Gi 
+      size: 1Gi
+  command: python -m tg_news_feed.main 

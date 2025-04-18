@@ -1,0 +1,1 @@
+web: python -m tg_news_feed.main 
