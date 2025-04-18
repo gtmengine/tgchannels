@@ -10,7 +10,7 @@ services:
     autoDeploy: true
     envVars:
       - key: BOT_TOKEN
-        sync: false  # Render will prompt for this value
+        value: 7735328862:AAFrcBtnZEmL9O-kM0dZ2Y_yDoFh11ICm40
       - key: API_ID
         sync: false
       - key: API_HASH
