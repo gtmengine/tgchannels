@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./tg_news_feed:/app/tg_news_feed
+      - ./db.sqlite:/app/db.sqlite
+      - ./.env:/app/.env
+      - ./bot_session.session:/app/bot_session.session
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# For future scaling with PostgreSQL:
+#  postgres:
+#    image: postgres:14-alpine
+#    restart: unless-stopped
+#    environment:
+#      POSTGRES_USER: tgbot
+#      POSTGRES_PASSWORD: password
+#      POSTGRES_DB: tg_news_feed
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#
+#  pgadmin:
+#    image: dpage/pgadmin4
+#    restart: unless-stopped
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: admin@example.com
+#      PGADMIN_DEFAULT_PASSWORD: pgadmin
+#    ports:
+#      - "5050:80"
+#    depends_on:
+#      - postgres
+#
+#volumes:
+#  postgres_data: 
