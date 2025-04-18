@@ -5,7 +5,7 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python -m tg_news_feed.main
-    repo: https://github.com/gtmengine/tg-news-feed.git  # Your GitHub repo
+    repo: https://github.com/gtmengine/tgchannels.git  # Updated repository URL
     branch: main
     autoDeploy: true
     envVars:
